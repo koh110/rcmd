@@ -1,10 +1,10 @@
 {
-  "name": "rcmd",
+  "name": "rmtcmd",
   "version": "0.0.0",
   "description": "execute commands local and remotely over SSH",
   "main": "index.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -d -p tsconfig.json",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint --ext .ts,.js src",
     "test": "jest"
@@ -13,6 +13,11 @@
     "type": "git",
     "url": "git+https://github.com/koh110/rcmd.git"
   },
+  "keywords": [
+    "remote",
+    "command",
+    "ssh"
+  ],
   "author": "koh110",
   "license": "MIT",
   "bugs": {
@@ -22,6 +27,7 @@
   "devDependencies": {
     "@types/jest": "^24.0.15",
     "@types/node": "^12.6.2",
+    "@types/ssh2": "^0.5.38",
     "@typescript-eslint/eslint-plugin": "^1.12.0",
     "@typescript-eslint/parser": "^1.12.0",
     "eslint": "^6.0.1",
@@ -33,5 +39,8 @@
     "ts-jest": "^24.0.2",
     "ts-node": "^8.3.0",
     "typescript": "^3.5.3"
+  },
+  "dependencies": {
+    "ssh2": "^0.8.5"
   }
 }
