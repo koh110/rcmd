@@ -1,5 +1,7 @@
 # rmtcmd
 
+[![CircleCI](https://circleci.com/gh/koh110/rmtcmd.svg?style=svg)](https://circleci.com/gh/koh110/rmtcmd)
+
 simple execute commands local and remotely over SSH
 
 ```bash
@@ -14,9 +16,31 @@ simple execute commands local and remotely over SSH
 const rmtcmd = require('rmtcmd')
 
 // execute commands
-const deploy = async ({ local, remote }) => {
-  await local('ls -la ~/', { cwd: __dirname })
-  await remote('sudo ls -la /home')
+const deploy = async ({ config, local, remote }) => {
+  await local('ls -la ./dist', { cwd: __dirname })
+
+  const target = `/home/${config.username}/rmtcmd`
+
+  await remote(`sudo mkdir -p ${target}`)
+  await remote(`sudo chmod 775 ${target}`)
+  await remote(`sudo chown ${config.username}:${config.username} ${target}`)
+
+  const src = path.join(__dirname, 'dist', 'src')
+
+  await local(
+    [
+      `rsync -av`,
+      `--exclude='node_modules'`,
+      `-e 'ssh -i ${config.privateKeyPath}'`,
+      `${src}/`,
+      `${config.username}@${config.host}:${target}`
+    ].join(' '),
+    {
+      cwd: __dirname
+    }
+  )
+
+  await remote(`ls -la ${target}`)
 }
 
 ;(async () => {
@@ -36,13 +60,14 @@ const deploy = async ({ local, remote }) => {
 
 # API
 
-## connect(options)
+## connect(config)
 
 wrapper `ssh2.client.connect`
 
-- options
+- config
   - ...[ssh2.Client.connect](https://github.com/mscdex/ssh2#client-methods)
   - sudoPassword \<string\>
+  - privateKeyPath: \<string\> ssh private key path (optional)
   - task \<[TaskFunction](#TaskFunction)\>
 
 ### TaskFunction
@@ -51,6 +76,7 @@ async function
 
 - args
 
+  - config \<[opject](#connectconfig)> connect config
   - local \<[LocalCmd](#LocalCmd)\> executer async function for local command
   - remote \<[RemoteCmd](#RemoteCmd)\> executer async function for remote command
 
