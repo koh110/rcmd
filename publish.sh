@@ -2,6 +2,8 @@
 
 set -exuo pipefail
 
+npm test
+
 rm -rf dist
 
 npm run build

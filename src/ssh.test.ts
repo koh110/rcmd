@@ -44,7 +44,7 @@ test('ssh start', async () => {
     host: host,
     username: username,
     privateKey: Buffer.from('key'),
-    sudo_password: 'password',
+    sudoPassword: 'password',
     task: task
   })
 

@@ -1,6 +1,6 @@
 {
   "name": "rmtcmd",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "execute commands local and remotely over SSH",
   "main": "index.js",
   "scripts": {
@@ -41,6 +41,8 @@
     "typescript": "^3.5.3"
   },
   "dependencies": {
-    "ssh2": "^0.8.5"
+    "prompts": "^2.1.0",
+    "ssh2": "^0.8.5",
+    "yargs": "^13.2.4"
   }
 }

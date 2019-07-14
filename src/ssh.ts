@@ -1,13 +1,12 @@
-import util from 'util'
 import { Client, ConnectConfig } from 'ssh2'
-import { exec } from 'child_process'
-const execAsync = util.promisify(exec)
+import { ExecOptions } from 'child_process'
+import { exec } from './util'
 
 /* eslint-disable no-console */
 
 type config = ConnectConfig & {
   task: TaskFunction
-  sudo_password?: string
+  sudoPassword?: string
 }
 
 type RemoteCmd = (cmd: string, password?: string) => Promise<{ code: number; signal: boolean }>
@@ -18,8 +17,8 @@ export type TaskFunction = ({ local, remote }: { local: LocalCmd; remote: Remote
 export function connect(args: config) {
   const conn = new Client()
 
-  const { task, sudo_password } = args
-  const remote: RemoteCmd = (cmd: string) => remoteCmd(conn, cmd, sudo_password)
+  const { task, sudoPassword } = args
+  const remote: RemoteCmd = (cmd: string) => remoteCmd(conn, cmd, sudoPassword)
 
   return new Promise((resolve, reject) => {
     conn
@@ -40,15 +39,15 @@ export function connect(args: config) {
       })
 
     delete args.task
-    delete args.sudo_password
+    delete args.sudoPassword
     args.port = args.port ? args.port : 22
     conn.connect(args)
   })
 }
 
-async function localCmd(cmd: string, options?): Promise<Buffer | string> {
+async function localCmd(cmd: string, options: ExecOptions): Promise<Buffer | string> {
   console.log(cmd)
-  const { stdout } = await execAsync(cmd, { timeout: 10000, encoding: 'utf8', ...options })
+  const stdout = await exec(cmd, options)
   console.log(stdout)
   return stdout
 }
