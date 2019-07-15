@@ -32,7 +32,7 @@ export async function getArgs() {
 
   let username = argv.username
   if (!username) {
-    username = (await exec('whoami')).trim()
+    username = (await exec('whoami')).stdout.trim()
   }
   if (!username) {
     username = (await prompts({
@@ -45,7 +45,7 @@ export async function getArgs() {
 
   let privateKeyPath: string = argv['private-key-path']
   if (!privateKeyPath) {
-    const HOME_PATH = (await exec('echo $HOME')).trim()
+    const HOME_PATH = (await exec('echo $HOME')).stdout.trim()
     privateKeyPath = path.join(HOME_PATH, '.ssh', 'id_rsa')
   }
 

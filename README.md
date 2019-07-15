@@ -96,7 +96,7 @@ wrapper `child_process.exec`
     - timeout
       - default: 10000
 
-- returns Promise\<string|Buffer\>
+- returns Promise\<{ stdout, stderr }\>
 
 ### RemoteCmd
 
@@ -105,7 +105,7 @@ wrapper `child_process.exec`
   - cmd \<string\> command
   - password \<string\> sudo password (optional)
 
-- returns Promise\<{ code: number, signal: boolean }\>
+- returns Promise\<{ code: number, signal: boolean, stdout: string }\>
 
 ## cli
 

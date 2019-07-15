@@ -47,30 +47,32 @@ export function connect(conn: Client, config: Config, task: TaskFunction, remote
   })
 }
 
-export async function localCmd(cmd: string, options: ExecOptions): Promise<Buffer | string> {
+export async function localCmd(cmd: string, options: ExecOptions): Promise<{ stdout; stderr }> {
   console.log(cmd)
-  const stdout = await exec(cmd, options)
+  const { stdout, stderr } = await exec(cmd, options)
   console.log(stdout)
-  return stdout
+  return { stdout, stderr }
 }
 
 export function remoteCmd(
   conn: Client,
   cmd: string,
   password: string = null
-): Promise<{ code: number; signal: boolean }> {
+): Promise<{ code: number; signal: boolean; stdout: string }> {
   console.log(cmd)
   return new Promise((resolve, reject) => {
     conn.exec(cmd, { pty: true }, (err, stream) => {
       if (err) return reject(err)
 
+      const res = []
       stream
         .on('close', (code, signal) => {
-          resolve({ code, signal })
+          resolve({ code, signal, stdout: res.join('\n') })
         })
         .on('data', data => {
           const stdout = data.toString('utf8')
           console.log(stdout)
+          res.push(stdout)
           if (cmd.includes('sudo') && stdout.toLowerCase().includes('password')) {
             stream.write(password + '\n')
           }
