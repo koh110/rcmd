@@ -8,7 +8,8 @@ export type Config = ConnectConfig & {
   sudoPassword?: string
 }
 
-export type RemoteCmd = (cmd: string, password?: string) => Promise<{ code: number; signal: boolean }>
+export type RemoteCmdResponse = Promise<{ code: number; signal: boolean; stdout: string }>
+export type RemoteCmd = (cmd: string) => RemoteCmdResponse
 export type LocalCmd = typeof ssh.localCmd
 
 export type TaskFunction = ({

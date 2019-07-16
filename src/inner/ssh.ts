@@ -5,7 +5,7 @@ import { ExecOptions } from 'child_process'
 import { promises as fsPromises } from 'fs'
 import { exec } from '../util'
 
-import { Config, TaskFunction, RemoteCmd } from '../ssh'
+import { Config, TaskFunction, RemoteCmd, RemoteCmdResponse } from '../ssh'
 
 export async function convertConfig(config: Config): Promise<Config> {
   let privateKey = config.privateKey
@@ -30,7 +30,6 @@ export function connect(conn: Client, config: Config, task: TaskFunction, remote
             resolve(d)
           })
           .catch(e => {
-            console.error(e)
             conn.end()
             reject(e)
           })
@@ -54,33 +53,38 @@ export async function localCmd(cmd: string, options: ExecOptions): Promise<{ std
   return { stdout, stderr }
 }
 
-export function remoteCmd(
-  conn: Client,
-  cmd: string,
-  password: string = null
-): Promise<{ code: number; signal: boolean; stdout: string }> {
+export function remoteCmd(conn: Client, cmd: string, password: string = null): RemoteCmdResponse {
   console.log(cmd)
   return new Promise((resolve, reject) => {
-    conn.exec(cmd, { pty: true }, (err, stream) => {
-      if (err) return reject(err)
+    try {
+      conn.exec(cmd, { pty: true }, (err, stream) => {
+        if (err) return reject(err)
 
-      const res = []
-      stream
-        .on('close', (code, signal) => {
-          resolve({ code, signal, stdout: res.join('\n') })
-        })
-        .on('data', data => {
-          const stdout = data.toString('utf8')
-          console.log(stdout)
-          res.push(stdout)
-          if (cmd.includes('sudo') && stdout.toLowerCase().includes('password')) {
-            stream.write(password + '\n')
-          }
-        })
-        .stderr.on('data', data => {
-          console.error(data)
-          reject(data)
-        })
-    })
+        const stdout = []
+        stream
+          .on('close', (code, signal) => {
+            const res = { code, signal, stdout: stdout.join('\n') }
+            if (code === 0) {
+              resolve(res)
+            } else {
+              reject(res)
+            }
+          })
+          .on('data', data => {
+            const str = data.toString('utf8')
+            console.log(str)
+            stdout.push(str)
+            if (cmd.includes('sudo') && str.toLowerCase().includes('password')) {
+              stream.write(password + '\n')
+            }
+          })
+          .stderr.on('data', data => {
+            console.error(data)
+            reject(data)
+          })
+      })
+    } catch (e) {
+      reject(e)
+    }
   })
 }

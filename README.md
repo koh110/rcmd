@@ -103,7 +103,6 @@ wrapper `child_process.exec`
 - args
 
   - cmd \<string\> command
-  - password \<string\> sudo password (optional)
 
 - returns Promise\<{ code: number, signal: boolean, stdout: string }\>
 
