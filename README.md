@@ -95,6 +95,9 @@ wrapper `child_process.exec`
       - default: 'utf8'
     - timeout
       - default: 10000
+    - stdout
+      - WritableStream
+      - default: process.stdout
 
 - returns Promise\<{ stdout, stderr }\>
 
@@ -103,6 +106,14 @@ wrapper `child_process.exec`
 - args
 
   - cmd \<string\> command
+
+  - options
+    - stdout
+      - WritableStream
+      - default: process.stdout
+    - stderr
+      - WritableStream
+      - default: process.stderr
 
 - returns Promise\<{ code: number, signal: boolean, stdout: string }\>
 

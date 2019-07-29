@@ -2,6 +2,7 @@ import path from 'path'
 import prompts from 'prompts'
 import yargs from 'yargs'
 import { exec } from './util'
+import { getHomePath, parseSshConfig } from './inner/cli'
 
 export async function getArgs() {
   const { argv } = yargs
@@ -30,7 +31,12 @@ export async function getArgs() {
       type: 'string'
     })
 
-  let username = argv.username
+  const home = await getHomePath()
+  const parsed = await parseSshConfig(argv.host, { home })
+
+  const host = parsed.host ? parsed.host : argv.host
+
+  let username = argv.username ? argv.username : parsed.user
   if (!username) {
     username = (await exec('whoami')).stdout.trim()
   }
@@ -45,8 +51,7 @@ export async function getArgs() {
 
   let privateKeyPath: string = argv['private-key-path']
   if (!privateKeyPath) {
-    const HOME_PATH = (await exec('echo $HOME')).stdout.trim()
-    privateKeyPath = path.join(HOME_PATH, '.ssh', 'id_rsa')
+    privateKeyPath = path.join(home, '.ssh', 'id_rsa')
   }
 
   let sudoPassword: string = argv['sudo-password']
@@ -61,5 +66,5 @@ export async function getArgs() {
     sudoPassword = response.value
   }
 
-  return { host: argv.host, port: argv.port, sudoPassword, username, privateKeyPath }
+  return { host: host, port: argv.port, sudoPassword, username, privateKeyPath }
 }
