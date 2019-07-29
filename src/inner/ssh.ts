@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import { Client } from 'ssh2'
 import { ExecOptions } from 'child_process'
 import { promises as fsPromises } from 'fs'
@@ -22,10 +20,8 @@ export function connect(conn: Client, config: Config, task: TaskFunction, remote
   return new Promise((resolve, reject) => {
     conn
       .on('ready', () => {
-        console.log('ssh client ready')
         task({ config, local: localCmd, remote })
           .then(d => {
-            console.log('ssh client close')
             conn.end()
             resolve(d)
           })
@@ -46,24 +42,37 @@ export function connect(conn: Client, config: Config, task: TaskFunction, remote
   })
 }
 
-export async function localCmd(cmd: string, options: ExecOptions): Promise<{ stdout; stderr }> {
-  console.log(cmd)
-  const { stdout, stderr } = await exec(cmd, options)
-  console.log(stdout)
-  return { stdout, stderr }
+export type LocalCmdOptions = {
+  stdout?: import('stream').Writable
+} & ExecOptions
+
+export async function localCmd(cmd: string, options: LocalCmdOptions): Promise<{ stdout; stderr }> {
+  const stdout = options.stdout ? options.stdout : process.stdout
+  stdout.write(cmd + '\n')
+  const res = await exec(cmd, options)
+  stdout.write(res.stdout + '\n')
+  return { stdout: res.stdout, stderr: res.stderr }
 }
 
-export function remoteCmd(conn: Client, cmd: string, password: string = null): RemoteCmdResponse {
-  console.log(cmd)
+export type RemoteCmdOptions = {
+  stdout?: import('stream').Writable
+  stderr?: import('stream').Writable
+}
+
+export function remoteCmd(conn: Client, cmd: string, password: string, options?: RemoteCmdOptions): RemoteCmdResponse {
+  const stdout = options && options.stdout ? options.stdout : process.stdout
+  const stderr = options && options.stderr ? options.stderr : process.stderr
+  stdout.write(cmd + '\n')
   return new Promise((resolve, reject) => {
     try {
       conn.exec(cmd, { pty: true }, (err, stream) => {
         if (err) return reject(err)
 
-        const stdout = []
+        let out = ''
         stream
           .on('close', (code, signal) => {
-            const res = { code, signal, stdout: stdout.join('\n') }
+            const res = { code, signal, stdout: out }
+            stdout.write('\n')
             if (code === 0) {
               resolve(res)
             } else {
@@ -72,14 +81,14 @@ export function remoteCmd(conn: Client, cmd: string, password: string = null): R
           })
           .on('data', data => {
             const str = data.toString('utf8')
-            console.log(str)
-            stdout.push(str)
+            stdout.write(data)
+            out += data
             if (cmd.includes('sudo') && str.toLowerCase().includes('password')) {
               stream.write(password + '\n')
             }
           })
           .stderr.on('data', data => {
-            console.error(data)
+            stderr.write(data + '\n')
             reject(data)
           })
       })
