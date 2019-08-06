@@ -70,9 +70,11 @@ test('getHost', async () => {
 
 Host test
   HostName test.com
+  Port 23
 
 Host foo
   User bar
+  IdentityFile ~/.ssh/config
   ForwardAgent true
   `
 
@@ -82,12 +84,18 @@ Host foo
   let res = await cli.parseSshConfig('test', { home })
   expect(res.host).toStrictEqual('test.com')
   expect(res.user).toStrictEqual(null)
+  expect(res.port).toStrictEqual(23)
+  expect(res.identityFile).toStrictEqual(null)
 
   res = await cli.parseSshConfig('foo', { home })
   expect(res.host).toStrictEqual('foo')
   expect(res.user).toStrictEqual('bar')
+  expect(res.port).toStrictEqual(null)
+  expect(res.identityFile).toStrictEqual('~/.ssh/config')
 
   res = await cli.parseSshConfig('hoge', { home })
   expect(res.host).toStrictEqual('hoge')
   expect(res.user).toStrictEqual(null)
+  expect(res.port).toStrictEqual(null)
+  expect(res.identityFile).toStrictEqual(null)
 })

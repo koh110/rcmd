@@ -1,40 +1,15 @@
 import path from 'path'
 import prompts from 'prompts'
-import yargs from 'yargs'
 import { exec } from './util'
-import { getHomePath, parseSshConfig } from './inner/cli'
+import { getArgv, getHomePath, parseSshConfig } from './inner/cli'
 
 export async function getArgs() {
-  const { argv } = yargs
-    .option('host', {
-      describe: 'remote host',
-      alias: 'h',
-      type: 'string'
-    })
-    .option('username', {
-      describe: 'ssh user',
-      alias: 'u',
-      type: 'string'
-    })
-    .option('private-key-path', {
-      describe: 'private key path',
-      alias: 'k',
-      type: 'string'
-    })
-    .option('port', {
-      describe: 'ssh port',
-      default: 22,
-      type: 'number'
-    })
-    .option('sudo-password', {
-      describe: 'ssh port',
-      type: 'string'
-    })
-
+  const argv = getArgv()
   const home = await getHomePath()
   const parsed = await parseSshConfig(argv.host, { home })
 
   const host = parsed.host ? parsed.host : argv.host
+  const port = parsed.port ? parsed.port : argv.port
 
   let username = argv.username ? argv.username : parsed.user
   if (!username) {
@@ -50,6 +25,13 @@ export async function getArgs() {
   }
 
   let privateKeyPath: string = argv['private-key-path']
+  if (!privateKeyPath && parsed.identityFile) {
+    if (parsed.identityFile.startsWith('~/')) {
+      privateKeyPath = path.join(home, parsed.identityFile.slice(2))
+    } else {
+      privateKeyPath = parsed.identityFile
+    }
+  }
   if (!privateKeyPath) {
     privateKeyPath = path.join(home, '.ssh', 'id_rsa')
   }
@@ -66,5 +48,5 @@ export async function getArgs() {
     sudoPassword = response.value
   }
 
-  return { host: host, port: argv.port, sudoPassword, username, privateKeyPath }
+  return { host, port, sudoPassword, username, privateKeyPath }
 }
