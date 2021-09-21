@@ -43,7 +43,7 @@
   "dependencies": {
     "prompts": "^2.1.0",
     "ssh-config": "^2.0.0-beta.1",
-    "ssh2": "^0.8.5",
+    "ssh2": "^1.4.0",
     "yargs": "^13.2.4"
   }
 }
